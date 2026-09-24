@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة تحكم الطبيب المتقدمة</title>
+    <style>
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #f4f7f6; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .panel { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 550px; text-align: right; }
+        h2 { color: #2c3e50; text-align: center; margin-bottom: 20px; }
+        .input-group { margin-bottom: 12px; }
+        label { display: block; margin-bottom: 5px; color: #34495e; font-weight: bold; font-size: 14px; }
+        input, select, textarea { width: 100%; padding: 10px; font-size: 15px; border: 2px solid #bdc3c7; border-radius: 8px; outline: none; background: #fff; }
+        input:focus, select:focus, textarea:focus { border-color: #3498db; }
+        button { background-color: #27ae60; color: white; border: none; padding: 14px; font-size: 16px; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; margin-top: 5px; transition: 0.3s; }
+        button:hover { background-color: #219653; }
+        .secondary-btn { background-color: #2980b9; margin-top: 5px; }
+        .secondary-btn:hover { background-color: #1f6391; }
+        .fire-btn { background-color: #d35400; margin-top: 5px; }
+        .fire-btn:hover { background-color: #ba4a00; }
+        .reset-btn { background-color: #e74c3c; margin-top: 10px; font-size: 14px; padding: 10px; }
+        .reset-btn:hover { background-color: #c0392b; }
+        .info-box { background: #e8f8f5; padding: 12px; border-radius: 8px; margin-top: 15px; text-align: center; color: #16a085; font-weight: bold; font-size: 15px; }
+        hr { border: 0; border-top: 1px solid #ddd; margin: 15px 0; }
+    </style>
+</head>
+<body>
+
+    <div class="panel">
+        <h2>لوحة إدارة العيادة الشاملة</h2>
+        
+        <div class="input-group">
+            <label for="doctorName">اسم الدكتور:</label>
+            <input type="text" id="doctorName" value="د. محمد عبد الله">
+        </div>
+
+        <div class="input-group">
+            <label for="nurseName">اسم الممرض / الممرضة:</label>
+            <input type="text" id="nurseName" value="أحمد إبراهيم">
+        </div>
+
+        <hr>
+
+        <div class="input-group">
+            <label for="patientNumber">رقم الكشف الحالي:</label>
+            <input type="number" id="patientNumber" placeholder="مثال: 1" value="1">
+        </div>
+
+        <div class="input-group">
+            <label for="patientName">اسم المريض التالي:</label>
+            <input type="text" id="patientName" placeholder="اكتب اسم المريض الثلاثي...">
+        </div>
+
+        <button onclick="nextPatient()">إعلان المريض وتحديث الشاشة الخارجية 📢</button>
+        
+        <hr>
+
+        <!-- ميزة رسالة الطوارئ / الفاير مسج -->
+        <div class="input-group">
+            <label for="fireMessageText">رسالة عاجلة / تنبيه فوري (Fire Message):</label>
+            <input type="text" id="fireMessageText" placeholder="مثال: نرجو من الجميع الهدوء، أو استراحة لمدة 10 دقائق...">
+        </div>
+        <button class="fire-btn" onclick="sendFireMessage()">إرسال رسالة عاجلة للشاشة 🚨</button>
+
+        <hr>
+
+        <!-- ميزة رابط يوتيوب المباشر -->
+        <div class="input-group">
+            <label for="youtubeLink">رابط فيديو يوتيوب (لعرضه على الشاشة بره):</label>
+            <input type="text" id="youtubeLink" placeholder="مثال: https://www.youtube.com/watch?v=XXXXXX">
+        </div>
+        <button class="secondary-btn" onclick="updateYoutubeVideo()">تشغيل فيديو اليوتيوب فوراً 📺</button>
+
+        <!-- ميزة التحكم في شريط الإعلانات المتحرك -->
+        <div class="input-group">
+            <label for="tickerText">نص شريط الإعلانات المتحرك أسفل الشاشة:</label>
+            <input type="text" id="tickerText" placeholder="اكتب التنبيه أو الإعلان هنا..." value="مرحباً بكم في العيادة. يرجى الهدوء وانتظار دورك.">
+        </div>
+        <button class="secondary-btn" onclick="updateTicker()">تحديث شريط الإعلانات بره 🚀</button>
+
+        <button class="reset-btn" onclick="resetQueue()">تصفير الطابور لهذا الدكتور 🔄</button>
+        
+        <div class="info-box" id="statusInfo">الحالة: جاهز للإرسال</div>
+    </div>
+
+    <script>
+        document.getElementById('doctorName').addEventListener('input', function() {
+            let docName = this.value.trim();
+            let allQueues = JSON.parse(localStorage.getItem('clinicAllQueues') || "{}");
+            let num = allQueues[docName] ? allQueues[docName] : 1;
+            document.getElementById('patientNumber').value = num;
+        });
+
+        window.onload = function() {
+            let docName = document.getElementById('doctorName').value.trim();
+            let allQueues = JSON.parse(localStorage.getItem('clinicAllQueues') || "{}");
+            if(allQueues[docName]) {
+                document.getElementById('patientNumber').value = allQueues[docName];
+            }
+        };
+
+        function nextPatient() {
+            let docName = document.getElementById('doctorName').value.trim();
+            let nurseName = document.getElementById('nurseName').value.trim();
+            let patientNum = document.getElementById('patientNumber').value;
+            let patientName = document.getElementById('patientName').value.trim();
+
+            if(!docName || !patientNum || !patientName) {
+                alert('من فضلك تأكد من إدخال اسم الدكتور، رقم الكشف، واسم المريض!');
+                return;
+            }
+
+            let allQueues = JSON.parse(localStorage.getItem('clinicAllQueues') || "{}");
+            allQueues[docName] = parseInt(patientNum);
+            localStorage.setItem('clinicAllQueues', JSON.stringify(allQueues));
+
+            let queueData = {
+                doctor: docName,
+                nurse: nurseName || "غير محدد",
+                number: patientNum,
+                name: patientName,
+                time: new Date().toLocaleTimeString('ar-EG', {hour: '2-digit', minute:'2-digit'})
+            };
+
+            localStorage.setItem('clinicPatientData', JSON.stringify(queueData));
+            document.getElementById('statusInfo').innerText = "تم إرسال المريض رقم " + patientNum + " للشاشة بنجاح!";
+            document.getElementById('patientName').value = '';
+            document.getElementById('patientNumber').value = parseInt(patientNum) + 1;
+        }
+
+        function sendFireMessage() {
+            let msg = document.getElementById('fireMessageText').value.trim();
+            if (!msg) {
+                alert('الرجاء كتابة نص الرسالة العاجلة أولاً!');
+                return;
+            }
+
+            let fireData = {
+                message: msg,
+                timestamp: new Date().getTime()
+            };
+
+            localStorage.setItem('clinicFireMessage', JSON.stringify(fireData));
+            document.getElementById('statusInfo').innerText = "تم إرسال الرسالة العاجلة للشاشة!";
+            alert('تم إرسال الرسالة العاجلة بنجاح!');
+        }
+
+        // استخراج ومعالجة رابط يوتيوب وتحديثه فوراً
+        function updateYoutubeVideo() {
+            let url = document.getElementById('youtubeLink').value.trim();
+            let videoId = "";
+
+            if (url.includes('youtu.be/')) {
+                videoId = url.split('youtu.be/')[1].split('?')[0];
+            } else if (url.includes('watch?v=')) {
+                videoId = url.split('watch?v=')[1].split('&')[0];
+            } else if (url.includes('/embed/')) {
+                videoId = url.split('/embed/')[1].split('?')[0];
+            }
+
+            if (videoId) {
+                localStorage.setItem('clinicYoutubeData', videoId);
+                document.getElementById('statusInfo').innerText = "تم تحديث فيديو اليوتيوب بنجاح!";
+                alert('تم تحديث وتشغيل فيديو اليوتيوب على الشاشة الخارجية فوراً!');
+            } else {
+                alert('من فضلك تأكد من إدخال رابط يوتيوب صحيح وصالح!');
+            }
+        }
+
+        function updateTicker() {
+            let text = document.getElementById('tickerText').value.trim();
+            if(text) {
+                localStorage.setItem('clinicTickerText', text);
+                alert('تم تحديث شريط الإعلانات الخارجي بنجاح!');
+            }
+        }
+
+        function resetQueue() {
+            let docName = document.getElementById('doctorName').value.trim();
+            if(confirm('هل أنت متأكد من تصفير الطابور وبدء العد من 1؟')) {
+                let allQueues = JSON.parse(localStorage.getItem('clinicAllQueues') || "{}");
+                allQueues[docName] = 1;
+                localStorage.setItem('clinicAllQueues', JSON.stringify(allQueues));
+                document.getElementById('patientNumber').value = 1;
+
+                let queueData = {
+                    doctor: docName,
+                    nurse: document.getElementById('nurseName').value.trim(),
+                    number: 1,
+                    name: 'في انتظار المرضى...',
+                    time: ''
+                };
+                localStorage.setItem('clinicPatientData', JSON.stringify(queueData));
+                document.getElementById('statusInfo').innerText = "تم تصفير الطابور بنجاح.";
+            }
+        }
+    </script>
+
+</body>
+</html>
